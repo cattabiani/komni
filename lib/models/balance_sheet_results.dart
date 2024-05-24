@@ -11,21 +11,18 @@ class KBalanceSheetResults {
   KBalanceSheetResults(this._s);
   KBalanceSheetResults.defaults() : _s = {};
 
+  (int, int, int) keySwap({required int b, required int c, int v = 0}) {
+    if (b < c) return (b, c, v);
+    return (c, b, -v);
+  }
+
   void applyTransaction(int curr, int person0, int person1, int amount) {
     // print("Apply: $curr, $person0, $person1, $amount");
     if (amount == 0 || person0 == person1 || person0 < 0 || person1 < 0) {
       return;
     }
-    // print("continued");
+    (person0, person1, amount) = keySwap(b: person0, c: person1, v: amount);
 
-    if (person0 > person1) {
-      // int swapping without temporary variable
-      person0 ^= person1;
-      person1 ^= person0;
-      person0 ^= person1;
-      // swap transaction
-      amount *= -1;
-    }
     final key = Tuple3(curr, person0, person1);
     _s[key] = amount + (_s[key] ?? 0);
     // we do not remove keys with 0 values for performance
@@ -69,6 +66,8 @@ class KBalanceSheetResults {
   }
 
   List<Tuple3<int, int, int>> personRecap(int person) {
+    _simplifyLoops();
+
     final List<Tuple3<int, int, int>> v = [];
     _s.forEach((key, value) {
       if ((key.item2 == person || key.item3 == person) && value != 0) {
@@ -88,5 +87,103 @@ class KBalanceSheetResults {
     });
 
     return v;
+  }
+
+  _simplifyLoops() {
+    final loops = _findLoops();
+
+    loops.forEach((graphId, graphLoops) {
+      for (var loop in graphLoops) {
+        int mev = -1;
+        for (int i = 0; i < loop.length; i++) {
+          int fromNode = loop[i];
+          int toNode = loop[(i + 1) % loop.length];
+          (fromNode, toNode, _) = keySwap(b: fromNode, c: toNode);
+          final key = Tuple3<int, int, int>(graphId, fromNode, toNode);
+          final value = _s[key] ?? 0;
+          if ((value.abs() < mev || mev < 0) && value != 0) {
+            mev = value.abs();
+          }
+        }
+
+        if (mev > 0) {
+          for (int i = 0; i < loop.length; i++) {
+            int fromNode = loop[i];
+            int toNode = loop[(i + 1) % loop.length];
+            (fromNode, toNode, _) = keySwap(b: fromNode, c: toNode);
+            final key = Tuple3<int, int, int>(graphId, fromNode, toNode);
+            final value = _s[key] ?? 0;
+            _s[key] = value > 0 ? value - mev : value + mev;
+          }
+        }
+      }
+    });
+  }
+
+// Function to detect loops in all graphs
+  Map<int, List<List<int>>> _findLoops() {
+    Map<int, Map<int, List<int>>> graphs = {};
+
+    // Parse the results to build adjacency lists
+    _s.forEach((key, value) {
+      int graphId = key.item1;
+      int fromNode = value > 0 ? key.item2 : key.item3;
+      int toNode = value > 0 ? key.item3 : key.item2;
+
+      if (value == 0) return; // Ignore if value is 0
+
+      graphs.putIfAbsent(graphId, () => {});
+      graphs[graphId]!.putIfAbsent(fromNode, () => []);
+      graphs[graphId]![fromNode]!.add(toNode);
+    });
+
+    // Detect loops in each graph
+    Map<int, List<List<int>>> allLoops = {};
+    graphs.forEach((graphId, adjList) {
+      List<List<int>> loops = _detectCycles(adjList);
+      if (loops.isNotEmpty) {
+        allLoops[graphId] = loops;
+      }
+    });
+
+    return allLoops;
+  }
+
+// Function to detect cycles in a graph using DFS
+  List<List<int>> _detectCycles(Map<int, List<int>> adjList) {
+    List<List<int>> cycles = [];
+    Set<int> visited = {};
+    Set<int> stack = {};
+    List<int> path = [];
+
+    void dfs(int node) {
+      if (stack.contains(node)) {
+        int index = path.indexOf(node);
+        cycles.add(path.sublist(index));
+        return;
+      }
+      if (visited.contains(node)) return;
+
+      visited.add(node);
+      stack.add(node);
+      path.add(node);
+
+      if (adjList.containsKey(node)) {
+        for (int neighbor in adjList[node]!) {
+          dfs(neighbor);
+        }
+      }
+
+      stack.remove(node);
+      path.removeLast();
+    }
+
+    for (int node in adjList.keys) {
+      if (!visited.contains(node)) {
+        dfs(node);
+      }
+    }
+
+    return cycles;
   }
 }
