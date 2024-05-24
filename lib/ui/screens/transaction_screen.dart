@@ -21,6 +21,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
   late TextEditingController _nameController;
   late TextEditingController _amountController;
   final FocusNode _nameFocus = FocusNode();
+  final FocusNode _amountFocus = FocusNode();
   final double _trailingSizedBox = 120.0;
   late List<TextEditingController> _amountControllerList;
   bool _unequalEditMode = false;
@@ -40,6 +41,12 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
       (_) => TextEditingController(), // Create a new controller for each index
     );
     _updateAmountController();
+
+    _amountFocus.addListener(() {
+      if (_amountFocus.hasFocus) {
+        selectAllText(_amountController);
+      }
+    });
   }
 
   @override
@@ -47,6 +54,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
     _nameController.dispose();
     _amountController.dispose();
     _nameFocus.dispose();
+    _amountFocus.dispose();
     for (var controller in _amountControllerList) {
       controller.dispose();
     }
@@ -69,7 +77,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
                 setState(() {
                   widget.transaction.name = _nameController.text;
                 });
-                FocusScope.of(context).unfocus();
+                _amountFocus.requestFocus();
               },
             )),
         Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
@@ -77,19 +85,23 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
               child: Container(
                   padding: KStyles.stdEdgeInsetAmount,
                   child: TextField(
+                    focusNode: _amountFocus,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                         labelText: "Amount", border: OutlineInputBorder()),
                     controller: _amountController,
                     style: KStyles.stdTextStyle,
-                    onEditingComplete: () {
+                    onChanged: (_) {
                       setState(() {
                         widget.transaction.amount =
                             str2cents(_amountController.text);
-                        widget.transaction.distributeEqually();
-                        _updateAmountController();
+                        if (!_unequalEditMode) {
+                          _distributeEqually();
+                        }
                       });
+                    },
+                    onEditingComplete: () {
                       FocusScope.of(context).unfocus();
                     },
                   ))),
@@ -118,8 +130,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
                 title: ElevatedButton(
                   onPressed: () {
                     setState(() {
-                      widget.transaction.distributeEqually();
-                      _updateAmountController();
+                      _distributeEqually();
                     });
                   },
                   child: const Text('Distribute Equally'),
@@ -151,6 +162,9 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
                             onChanged: (int? value) {
                               setState(() {
                                 widget.transaction.creditor = value ?? -1;
+                                if (!_unequalEditMode) {
+                                  _distributeEqually();
+                                }
                               });
                             }),
                         trailing: SizedBox(
@@ -163,8 +177,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
                                   widget.transaction.debtors[index] =
                                       value ?? false;
                                   if (!_unequalEditMode) {
-                                    widget.transaction.distributeEqually();
-                                    _updateAmountController();
+                                    _distributeEqually();
                                   }
                                 });
                               },
@@ -222,6 +235,11 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
     for (int i = 0; i < widget.balanceSheet.people.length; ++i) {
       _amountControllerList[i].text = "";
     }
+  }
+
+  void _distributeEqually() {
+    widget.transaction.distributeEqually();
+    _updateAmountController();
   }
 
   void _unequalEdit(int index) {
