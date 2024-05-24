@@ -18,6 +18,18 @@ class KStyles {
     fontWeight: FontWeight.normal, // Set the default font weight
   );
 
+  static const TextStyle greenTextStyle = TextStyle(
+    fontSize: stdFontSize, // Set the desired font size
+    color: Colors.green, // Set the default text color
+    fontWeight: FontWeight.normal, // Set the default font weight
+  );
+
+  static const TextStyle redTextStyle = TextStyle(
+    fontSize: stdFontSize, // Set the desired font size
+    color: Colors.red, // Set the default text color
+    fontWeight: FontWeight.normal, // Set the default font weight
+  );
+
   static const TextStyle boldTextStyle = TextStyle(
     fontSize: stdFontSize,
     color: Colors.black,

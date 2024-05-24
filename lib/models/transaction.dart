@@ -19,6 +19,13 @@ class KTransaction {
 
   KTransaction(this.name, this.amount, this.creditor, this.debtors, this.debts,
       this.currency);
+  KTransaction.copy(KTransaction other)
+      : name = other.name,
+        amount = other.amount,
+        creditor = other.creditor,
+        debtors = other.debtors,
+        debts = other.debts,
+        currency = other.currency;
   KTransaction.defaults(this.name, int n, this.currency)
       : amount = 0,
         creditor = 0,
@@ -42,9 +49,13 @@ class KTransaction {
       --creditor;
     }
 
-    if (wasDebtor) {
+    if (wasDebtor && creditor != -1) {
       amount -= debt;
     }
+  }
+
+  bool isRemovable(int index) {
+    return creditor != index && (!debtors[index] || debts[index] == 0);
   }
 
   void distributeEqually() {

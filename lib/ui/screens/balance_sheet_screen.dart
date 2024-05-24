@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:komni/models/balance_sheet.dart';
+// import 'package:komni/models/transaction.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
 import 'package:komni/ui/screens/transaction_screen.dart';
+import 'package:komni/ui/screens/people_screen.dart';
+import 'package:komni/ui/screens/settle_screen.dart';
 
 class KBalanceSheetScreen extends StatefulWidget {
   final KBalanceSheet balanceSheet;
@@ -24,7 +27,6 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
     if (widget.balanceSheet.ledger.isEmpty) {
       _nameFocus.requestFocus();
     }
-    
   }
 
   @override
@@ -53,6 +55,21 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
                 FocusScope.of(context).unfocus();
               },
             )),
+        Container(
+            padding: KStyles.stdEdgeInset,
+            color: KStyles.stdGreen,
+            child: TextField(
+                readOnly: true,
+                style: KStyles.stdTextStyle,
+                decoration: InputDecoration(
+                    border: InputBorder.none,
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    labelText: "People",
+                    hintText: widget.balanceSheet.people.join(", "),
+                    hintStyle: KStyles.stdTextStyle),
+                onTap: () {
+                  _editPeople();
+                })),
         Expanded(
             child: ReorderableListView(
                 onReorder: (int oldIndex, int newIndex) {
@@ -76,13 +93,15 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
                     direction: DismissDirection.startToEnd,
                     onDismissed: (direction) {
                       setState(() {
-                        widget.balanceSheet.ledger.removeAt(index);
+                        widget.balanceSheet.removeTransaction(index);
                       });
                     },
                     background: KStyles.stdBackgroundDelete,
                     child: Container(
-                        color: KStyles.altGrey(
-                            widget.balanceSheet.ledger.length - index - 1),
+                        color: widget.balanceSheet.ledger[index].creditor == -1
+                            ? Colors.red[200]
+                            : KStyles.altGrey(
+                                widget.balanceSheet.ledger.length - index - 1),
                         child: Padding(
                             padding: KStyles.stdEdgeInset,
                             child: ListTile(
@@ -131,29 +150,79 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
                             ))))
             ])),
       ]),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () {
-          final n = widget.balanceSheet.ledger.length;
-          setState(() {
-            widget.balanceSheet.addTransaction();
-          });
-          _editTransaction(n);
-        },
-        tooltip: 'Add Transaction',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+        // FloatingActionButton(
+        //   heroTag: null,
+        //   onPressed: () {
+        //     widget.balanceSheet.results.debugRecapResults();
+        //   },
+        //   tooltip: 'Print Results',
+        //   child: const Icon(Icons.bug_report),
+        // ),
+        // KStyles.stdSizedBox,
+        FloatingActionButton(
+          heroTag: null,
+          onPressed: () {
+            _settle();
+          },
+          tooltip: 'Settle',
+          child: const Icon(Icons.handshake_outlined),
+        ),
+        KStyles.stdSizedBox,
+        FloatingActionButton(
+          heroTag: null,
+          onPressed: () {
+            final n = widget.balanceSheet.ledger.length;
+            setState(() {
+              widget.balanceSheet.addTransaction();
+            });
+            _editTransaction(n);
+          },
+          tooltip: 'Add Transaction',
+          child: const Icon(Icons.add),
+        ),
+      ]),
     );
   }
 
   _editTransaction(int index) {
     FocusScope.of(context).unfocus();
+    final transaction = widget.balanceSheet.removeTransaction(index);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => KTransactionScreen(
-            balanceSheet: widget.balanceSheet,
-            transaction: widget.balanceSheet.ledger[index]),
+            balanceSheet: widget.balanceSheet, transaction: transaction),
+      ),
+    ).then((_) {
+      widget.balanceSheet.insertTransactionAt(index, transaction);
+      setState(() {});
+    });
+  }
+
+  _editPeople() {
+    FocusScope.of(context).unfocus();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KPeopleScreen(
+          balanceSheet: widget.balanceSheet,
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
+  }
+
+  _settle() {
+    FocusScope.of(context).unfocus();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KSettleScreen(
+          balanceSheet: widget.balanceSheet,
+        ),
       ),
     ).then((_) {
       setState(() {});
