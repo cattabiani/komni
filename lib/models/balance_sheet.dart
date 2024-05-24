@@ -37,18 +37,33 @@ class KBalanceSheet {
 
   void removePerson(int index) {
     for (var element in ledger) {
-      // _applyTransaction(element, -1);
       element.removePerson(index);
-      // _applyTransaction(element, 1);
     }
 
     results.removePerson(index);
     people.removeAt(index);
   }
 
-  bool isRemovable(int index) {
+  void removeCurrency(int index) {
+    for (var element in ledger) {
+      element.removeCurrency(index);
+    }
+
+    results.removeCurrency(index);
+    currencies.removeAt(index);
+  }
+
+  bool isPersonRemovable(int index) {
     for (int i = 0; i < ledger.length; ++i) {
-      if (!ledger[i].isRemovable(index)) return false;
+      if (!ledger[i].isPersonRemovable(index)) return false;
+    }
+
+    return true;
+  }
+
+  bool isCurrencyRemovable(int index) {
+    for (int i = 0; i < ledger.length; ++i) {
+      if (!ledger[i].isCurrencyRemovable(index)) return false;
     }
 
     return true;

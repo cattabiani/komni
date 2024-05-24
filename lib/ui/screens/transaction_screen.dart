@@ -3,6 +3,7 @@ import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/models/transaction.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
+import 'package:komni/ui/screens/edit_list_screen.dart';
 // import 'package:komni/utils/utils.dart';
 
 class KTransactionScreen extends StatefulWidget {
@@ -195,18 +196,18 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
                       ));
                 })),
       ]),
-      // floatingActionButton: FloatingActionButton(
-      //   heroTag: null,
-      //   onPressed: () {
-      //     final n = widget.balanceSheet.ledger.length;
-      //     setState(() {
-      //       widget.balanceSheet.addTransaction();
-      //     });
-      //     _editTransaction(n);
-      //   },
-      //   tooltip: 'Add Transaction',
-      //   child: const Icon(Icons.add),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: null,
+        onPressed: () async {
+          final n = widget.balanceSheet.currencies.length;
+          widget.balanceSheet.currencies.add("C $n");
+          widget.transaction.currency = n;
+          await editItem(context, n, widget.balanceSheet.currencies);
+          setState(() {});
+        },
+        tooltip: 'Add Currency',
+        child: const Icon(Icons.payments_outlined),
+      ),
     );
   }
 
@@ -305,7 +306,57 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
     }
   }
 
-  // _editTransaction(int index) {
-  //   // Navigator.push(KBalanceSheetScreen(balanceSheet: widget.balanceSheet))
+  // _addCurrency() {
+  //         // final n = widget.balanceSheet.currencies.length;
+  //         // setState(() {
+  //         //   _addCurrency();
+  //         //   widget.transaction.currency = n;
+  //         // });
+
+  //   final TextEditingController nameController =
+  //       TextEditingController();
+  //   final nameFocus = FocusNode();
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text('Edit Currency'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: <Widget>[
+  //             TextField(
+  //               focusNode: nameFocus,
+  //               controller: nameController,
+  //               style: KStyles.stdTextStyle,
+  //               decoration: const InputDecoration(labelText: 'Currency'),
+  //             ),
+  //           ],
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text('Cancel'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //           TextButton(
+  //             child: const Text('Save'),
+  //             onPressed: () {
+  //               ans = true;
+  //               balanceSheet.people[index] = nameController.text;
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   ).then((_) {
+  //     nameController.dispose();
+  //     nameFocus.dispose();
+  //   });
+
+  //   nameFocus.requestFocus();
+  //   return ans;
   // }
 }

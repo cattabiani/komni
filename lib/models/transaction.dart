@@ -54,8 +54,20 @@ class KTransaction {
     }
   }
 
-  bool isRemovable(int index) {
+  void removeCurrency(int index) {
+    if (currency == index) {
+      currency = -1;
+    } else if (currency > index) {
+      --currency;
+    }
+  }
+
+  bool isPersonRemovable(int index) {
     return creditor != index && (!debtors[index] || debts[index] == 0);
+  }
+
+  bool isCurrencyRemovable(int index) {
+    return currency != index;
   }
 
   void distributeEqually() {

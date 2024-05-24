@@ -51,6 +51,23 @@ class KBalanceSheetResults {
     _s.addAll(modifiedMap);
   }
 
+  void removeCurrency(int index) {
+    final Map<Tuple3<int, int, int>, int> modifiedMap = {};
+
+    _s.forEach((key, value) {
+      var item1 = key.item1;
+      if (item1 != index) {
+        if (item1 > index) item1--;
+
+        final modifiedKey = Tuple3(item1, key.item2, key.item3);
+        modifiedMap[modifiedKey] = value;
+      }
+    });
+
+    _s.clear();
+    _s.addAll(modifiedMap);
+  }
+
   List<Tuple3<int, int, int>> personRecap(int person) {
     final List<Tuple3<int, int, int>> v = [];
     _s.forEach((key, value) {
@@ -72,11 +89,4 @@ class KBalanceSheetResults {
 
     return v;
   }
-
-  // void debugRecapResults() {
-  //   print("Debugging Recap Results (${_s.length}):");
-  //   _s.forEach((key, value) {
-  //     print("Key: $key, Value: $value");
-  //   });
-  // }
 }

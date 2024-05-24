@@ -4,7 +4,7 @@ import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
 import 'package:komni/ui/screens/transaction_screen.dart';
-import 'package:komni/ui/screens/people_screen.dart';
+import 'package:komni/ui/screens/edit_list_screen.dart';
 import 'package:komni/ui/screens/settle_screen.dart';
 
 class KBalanceSheetScreen extends StatefulWidget {
@@ -152,15 +152,6 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
       ]),
       floatingActionButton:
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-        // FloatingActionButton(
-        //   heroTag: null,
-        //   onPressed: () {
-        //     widget.balanceSheet.results.debugRecapResults();
-        //   },
-        //   tooltip: 'Print Results',
-        //   child: const Icon(Icons.bug_report),
-        // ),
-        // KStyles.stdSizedBox,
         FloatingActionButton(
           heroTag: null,
           onPressed: () {
@@ -168,6 +159,28 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
           },
           tooltip: 'Settle',
           child: const Icon(Icons.handshake_outlined),
+        ),
+        KStyles.stdSizedBox,
+        FloatingActionButton(
+          heroTag: null,
+          onPressed: () {
+            _editCurrency();
+          },
+          tooltip: 'Edit Currencies',
+          child: const Icon(Icons.payments_outlined),
+        ),
+        KStyles.stdSizedBox,
+        FloatingActionButton(
+          heroTag: null,
+          onPressed: () {
+            final n = widget.balanceSheet.people.length;
+            setState(() {
+              widget.balanceSheet.people.add("Person $n");
+              editItem(context, n, widget.balanceSheet.people);
+            });
+          },
+          tooltip: 'Add Person',
+          child: const Icon(Icons.person_add),
         ),
         KStyles.stdSizedBox,
         FloatingActionButton(
@@ -206,8 +219,32 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => KPeopleScreen(
-          balanceSheet: widget.balanceSheet,
+        builder: (context) => KEditListScreen(
+          title: "People",
+          l: widget.balanceSheet.people,
+          icon: const Icon(Icons.person_add),
+          removeAt: widget.balanceSheet.removePerson,
+          isRemovable: widget.balanceSheet.isPersonRemovable,
+          newItemBaseName: "Person",
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
+  }
+
+  _editCurrency() {
+    FocusScope.of(context).unfocus();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KEditListScreen(
+          title: "Currencies",
+          l: widget.balanceSheet.currencies,
+          icon: const Icon(Icons.payments_outlined),
+          removeAt: widget.balanceSheet.removeCurrency,
+          isRemovable: widget.balanceSheet.isCurrencyRemovable,
+          newItemBaseName: "C",
         ),
       ),
     ).then((_) {
