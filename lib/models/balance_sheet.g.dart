@@ -22,13 +22,14 @@ class KBalanceSheetAdapter extends TypeAdapter<KBalanceSheet> {
       fields[2] as KBalanceSheetResults,
       (fields[3] as List).cast<String>(),
       (fields[4] as List).cast<String>(),
+      fields[5] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, KBalanceSheet obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class KBalanceSheetAdapter extends TypeAdapter<KBalanceSheet> {
       ..writeByte(3)
       ..write(obj.people)
       ..writeByte(4)
-      ..write(obj.currencies);
+      ..write(obj.currencies)
+      ..writeByte(5)
+      ..write(obj.isEditTransactionMode);
   }
 
   @override

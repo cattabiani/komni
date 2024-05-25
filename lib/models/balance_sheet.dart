@@ -17,22 +17,43 @@ class KBalanceSheet {
   List<String> people;
   @HiveField(4)
   List<String> currencies;
+  @HiveField(5)
+  int isEditTransactionMode;
 
-  KBalanceSheet(
-      this.name, this.ledger, this.results, this.people, this.currencies);
+  KBalanceSheet(this.name, this.ledger, this.results, this.people,
+      this.currencies, this.isEditTransactionMode) {
+    endEditTransaction();
+  }
+
+  void beginEditTransaction(int index) {
+    if (index < 0 || index >= ledger.length) return;
+    if (isEditTransactionMode >= 0) {
+      endEditTransaction();
+    }
+
+    isEditTransactionMode = index;
+    applyTransaction(isEditTransactionMode, -1);
+  }
+
+  void endEditTransaction() {
+    if (isEditTransactionMode >= 0) {
+      applyTransaction(isEditTransactionMode, 1);
+      isEditTransactionMode = -1;
+    }
+  }
+
   KBalanceSheet.defaults(this.name)
       : ledger = [],
         results = KBalanceSheetResults.defaults(),
         people = ["self"],
-        currencies = ["EUR", "CHF"];
+        currencies = ["EUR", "CHF"],
+        isEditTransactionMode = -1;
 
-  void addPerson() {
+  void addPerson(String s) {
     for (var element in ledger) {
       element.addPerson();
     }
-    final n = people.length;
-
-    people.add("Person $n");
+    people.add(s);
   }
 
   void removePerson(int index) {
@@ -76,12 +97,8 @@ class KBalanceSheet {
         .add(KTransaction.defaults("Transaction $n", people.length, currency));
   }
 
-  void insertTransactionAt(int index, KTransaction t) {
-    ledger.insert(index, t);
-    _applyTransaction(ledger[index], 1);
-  }
-
-  void _applyTransaction(KTransaction t, int multi) {
+  void applyTransaction(int index, int multi) {
+    final t = ledger[index];
     if (t.creditor < 0) {
       return;
     }
@@ -97,7 +114,7 @@ class KBalanceSheet {
   }
 
   KTransaction removeTransaction(int index) {
-    _applyTransaction(ledger[index], -1);
+    applyTransaction(index, -1);
     return ledger.removeAt(index);
   }
 
@@ -128,7 +145,7 @@ class KBalanceSheet {
       final t = KTransaction(
           "Settle ${people[person]} $i", amount, person0, debtors, debts, curr);
       ledger.add(t);
-      _applyTransaction(ledger.last, 1);
+      applyTransaction(ledger.length - 1, 1);
     }
   }
 }

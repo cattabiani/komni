@@ -7,8 +7,10 @@ import 'package:komni/utils/styles.dart';
 
 class KHomeScreen extends StatelessWidget {
   final KStorage storage;
+  // final Future<void> Function() saveFun;
 
-  const KHomeScreen({super.key, required this.storage});
+  const KHomeScreen(
+      {super.key, required this.storage}); //, required this.saveFun});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class KHomeScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            KNoteListScreen(storage: storage),
+            KNoteListScreen(storage: storage), //, saveFun: saveFun),
             KBalanceSheetListScreen(storage: storage)
           ],
         ),

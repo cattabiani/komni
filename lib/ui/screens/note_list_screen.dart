@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:komni/models/storage.dart';
 import 'package:komni/models/note.dart';
 import 'package:komni/utils/styles.dart';
+import 'package:komni/utils/utils.dart';
+// import 'package:komni/utils/utils.dart';
 
 class KNoteListScreen extends StatefulWidget {
   final KStorage storage;
+  // final Future<void> Function() saveFun;
 
-  const KNoteListScreen({super.key, required this.storage});
+  const KNoteListScreen(
+      {super.key, required this.storage}); //, required this.saveFun});
 
   @override
   State<KNoteListScreen> createState() => _KNoteListScreenState();
 }
 
+// with SaveStateMixin<KNoteListScreen>
 class _KNoteListScreenState extends State<KNoteListScreen> {
   @override
   void initState() {
@@ -59,8 +64,10 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
                           padding: KStyles.stdEdgeInset,
                           child: ListTile(
                             trailing: KStyles.stdDragHandle(index),
-                            onTap: () {
-                              _editNote(index);
+                            onTap: () async {
+                              final note = widget.storage.notes[index];
+                              final bool edited = await _editNote(note);
+                              if (edited) setState(() {});
                             },
                             title: Text(widget.storage.notes[index].name,
                                 style: KStyles.stdTextStyle),
@@ -72,14 +79,15 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
           ]),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
-        onPressed: () {
+        onPressed: () async {
           final n = widget.storage.notes.length;
-          setState(() {
-            widget.storage.notes.add(KNote.defaults("Note $n"));
-          });
-          _editNote(n);
-          // Handle adding new notes here
-          // For example, you can navigate to a new screen to add notes
+          final note = KNote.defaults("Note $n");
+          final bool edited = await _editNote(note);
+          if (edited) {
+            setState(() {
+              widget.storage.notes.add(note);
+            });
+          }
         },
         tooltip: 'Add Note',
         child: const Icon(Icons.add),
@@ -87,19 +95,21 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
     );
   }
 
-  void _editNote(int index) {
-    final item = widget.storage.notes[index];
+  Future<bool> _editNote(KNote item) async {
     final TextEditingController nameController =
         TextEditingController(text: item.name);
     final TextEditingController infoController =
         TextEditingController(text: item.info);
     final nameFocus = FocusNode();
+    final infoFocus = FocusNode();
 
-    showDialog(
+    bool edited = false;
+
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
-        nameController.selection = TextSelection(
-            baseOffset: 0, extentOffset: nameController.text.length);
+        selectAllText(nameController);
+        nameFocus.requestFocus();
         return AlertDialog(
           title: const Text('Edit Note'),
           content: Column(
@@ -110,11 +120,19 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
                 controller: nameController,
                 style: KStyles.stdTextStyle,
                 decoration: const InputDecoration(labelText: 'Name'),
+                onEditingComplete: () {
+                  selectAllText(infoController);
+                  infoFocus.requestFocus();
+                },
               ),
               TextField(
+                focusNode: infoFocus,
                 controller: infoController,
                 style: KStyles.stdTextStyle,
                 decoration: const InputDecoration(labelText: 'Info'),
+                onEditingComplete: () {
+                  infoFocus.unfocus();
+                },
               ),
             ],
           ),
@@ -128,10 +146,9 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
             TextButton(
               child: const Text('Save'),
               onPressed: () {
-                setState(() {
-                  item.name = nameController.text;
-                  item.info = infoController.text;
-                });
+                item.name = nameController.text;
+                item.info = infoController.text;
+                edited = true;
                 Navigator.of(context).pop();
               },
             ),
@@ -142,8 +159,10 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
       nameController.dispose();
       infoController.dispose();
       nameFocus.dispose();
+      infoFocus.dispose();
     });
 
     nameFocus.requestFocus();
+    return edited;
   }
 }

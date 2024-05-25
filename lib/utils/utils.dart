@@ -46,3 +46,13 @@ void selectAllText(TextEditingController controller) {
     extentOffset: controller.text.length,
   );
 }
+
+// Define the mixin class
+mixin SaveStateMixin<T extends StatefulWidget> on State<T> {
+  // Original setState method
+  @override
+  void setState(VoidCallback fn) {
+    (widget as dynamic).saveFun(); // Call save function
+    super.setState(fn); // Call original setState
+  }
+}

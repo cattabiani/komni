@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:komni/utils/styles.dart';
 import 'dart:async';
 
+import 'package:komni/utils/utils.dart';
+
 class KEditListScreen extends StatefulWidget {
   final List<String> l;
   final bool Function(int index)? isRemovable;
@@ -75,17 +77,27 @@ class _KEditListScreenState extends State<KEditListScreen> {
                           style: KStyles.stdTextStyle,
                         ),
                         onTap: () async {
-                          await editItem(context, index, widget.l);
-                          setState(() {});
+                          final (newVal, edited) =
+                              await editItem(context, widget.l[index]);
+                          if (edited) {
+                            setState(() {
+                              widget.l[index] = newVal;
+                            });
+                          }
                         })));
           }),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         onPressed: () async {
           final n = widget.l.length;
-          widget.l.add("${widget.newItemBaseName} $n");
-          await editItem(context, n, widget.l);
-          setState(() {});
+          final String s = "${widget.newItemBaseName} $n";
+
+          final (newVal, edited) = await editItem(context, s);
+          if (edited) {
+            setState(() {
+              widget.l.add(newVal);
+            });
+          }
         },
         tooltip: 'Add',
         child: widget.icon,
@@ -94,18 +106,17 @@ class _KEditListScreenState extends State<KEditListScreen> {
   }
 }
 
-Future<void> editItem(BuildContext context, int index, List<String> l) async {
-  final item = l[index];
+Future<(String, bool)> editItem(BuildContext context, String item) async {
   final TextEditingController nameController =
       TextEditingController(text: item);
   final nameFocus = FocusNode();
-  final Completer<void> completer = Completer<void>();
+  bool edited = false;
 
-  showDialog(
+  await showDialog(
     context: context,
     builder: (BuildContext context) {
-      nameController.selection = TextSelection(
-          baseOffset: 0, extentOffset: nameController.text.length);
+      selectAllText(nameController);
+      nameFocus.requestFocus();
       return AlertDialog(
         title: const Text('Edit Item'),
         content: Column(
@@ -116,6 +127,9 @@ Future<void> editItem(BuildContext context, int index, List<String> l) async {
               controller: nameController,
               style: KStyles.stdTextStyle,
               decoration: const InputDecoration(labelText: 'Name'),
+              onEditingComplete: () {
+                nameFocus.unfocus();
+              },
             ),
           ],
         ),
@@ -129,7 +143,8 @@ Future<void> editItem(BuildContext context, int index, List<String> l) async {
           TextButton(
             child: const Text('Save'),
             onPressed: () {
-              l[index] = nameController.text;
+              item = nameController.text;
+              edited = true;
               Navigator.of(context).pop();
             },
           ),
@@ -139,9 +154,8 @@ Future<void> editItem(BuildContext context, int index, List<String> l) async {
   ).then((_) {
     nameController.dispose();
     nameFocus.dispose();
-    completer.complete();
   });
 
   nameFocus.requestFocus();
-  return completer.future;
+  return (item, edited);
 }

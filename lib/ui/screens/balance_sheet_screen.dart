@@ -172,12 +172,16 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
         KStyles.stdSizedBox,
         FloatingActionButton(
           heroTag: null,
-          onPressed: () {
+          onPressed: () async {
             final n = widget.balanceSheet.people.length;
-            setState(() {
-              widget.balanceSheet.people.add("Person $n");
-              editItem(context, n, widget.balanceSheet.people);
-            });
+            final String s = "Person $n";
+
+            final (newVal, edited) = await editItem(context, s);
+            if (edited) {
+              setState(() {
+                widget.balanceSheet.addPerson(newVal);
+              });
+            }
           },
           tooltip: 'Add Person',
           child: const Icon(Icons.person_add),
@@ -201,15 +205,16 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
 
   _editTransaction(int index) {
     FocusScope.of(context).unfocus();
-    final transaction = widget.balanceSheet.removeTransaction(index);
+    widget.balanceSheet.beginEditTransaction(index);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => KTransactionScreen(
-            balanceSheet: widget.balanceSheet, transaction: transaction),
+            balanceSheet: widget.balanceSheet,
+            transaction: widget.balanceSheet.ledger[index]),
       ),
     ).then((_) {
-      widget.balanceSheet.insertTransactionAt(index, transaction);
+      widget.balanceSheet.endEditTransaction();
       setState(() {});
     });
   }
