@@ -40,7 +40,22 @@ class _KEditListScreenState extends State<KEditListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Text('Edit ${widget.title}', style: KStyles.stdTextStyle)),
+          title: Text('Edit ${widget.title}', style: KStyles.stdTextStyle),
+          actions: [
+            KStyles.stdButton(
+                onPressed: () async {
+                  final n = widget.l.length;
+                  final String s = "${widget.newItemBaseName} $n";
+
+                  final (newVal, edited) = await editItem(context, s);
+                  if (edited) {
+                    setState(() {
+                      widget.l.add(newVal);
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add)),
+          ]),
       body: ListView.builder(
           itemCount: widget.l.length,
           itemBuilder: (context, index) {
@@ -86,22 +101,6 @@ class _KEditListScreenState extends State<KEditListScreen> {
                           }
                         })));
           }),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () async {
-          final n = widget.l.length;
-          final String s = "${widget.newItemBaseName} $n";
-
-          final (newVal, edited) = await editItem(context, s);
-          if (edited) {
-            setState(() {
-              widget.l.add(newVal);
-            });
-          }
-        },
-        tooltip: 'Add',
-        child: widget.icon,
-      ),
     );
   }
 }

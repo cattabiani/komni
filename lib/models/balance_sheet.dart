@@ -90,6 +90,14 @@ class KBalanceSheet {
     return true;
   }
 
+  void addOne2oneTransaction(
+      String name_, int amount_, int currency_, int creditor_, int debtor_) {
+    final n = ledger.length;
+    addTransaction();
+    ledger[n].one2one(name_, amount_, currency_, creditor_, debtor_);
+    applyTransaction(n, 1);
+  }
+
   void addTransaction() {
     final n = ledger.length;
     final currency = ledger.isEmpty ? 0 : ledger.last.currency;

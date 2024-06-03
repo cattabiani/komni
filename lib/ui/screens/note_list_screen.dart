@@ -31,7 +31,20 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: KAppBar(name: "Notes", storage: widget.storage),
+      appBar: AppBar(actions: [
+        KStyles.stdButton(
+            onPressed: () async {
+              final n = widget.storage.notes.length;
+              final note = KNote.defaults("Note $n");
+              final bool edited = await _editNote(note);
+              if (edited) {
+                setState(() {
+                  widget.storage.notes.add(note);
+                });
+              }
+            },
+            icon: const Icon(Icons.add)),
+      ]),
       body: ReorderableListView(
           onReorder: (int oldIndex, int newIndex) {
             setState(() {
@@ -59,39 +72,23 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
                   },
                   background: KStyles.stdBackgroundDelete,
                   child: Container(
-                      color: KStyles.altGrey(index),
-                      child: Padding(
-                          padding: KStyles.stdEdgeInset,
-                          child: ListTile(
-                            trailing: KStyles.stdDragHandle(index),
-                            onTap: () async {
-                              final note = widget.storage.notes[index];
-                              final bool edited = await _editNote(note);
-                              if (edited) setState(() {});
-                            },
-                            title: Text(widget.storage.notes[index].name,
+                      color: KStyles.altGrey(
+                          invIdx(index, widget.storage.notes.length)),
+                      child: ListTile(
+                        trailing: KStyles.stdDragHandle(index),
+                        onTap: () async {
+                          final note = widget.storage.notes[index];
+                          final bool edited = await _editNote(note);
+                          if (edited) setState(() {});
+                        },
+                        title: Text(widget.storage.notes[index].name,
+                            style: KStyles.boldTextStyle),
+                        subtitle: widget.storage.notes[index].info == ""
+                            ? null
+                            : Text(widget.storage.notes[index].info,
                                 style: KStyles.stdTextStyle),
-                            subtitle: widget.storage.notes[index].info == ""
-                                ? null
-                                : Text(widget.storage.notes[index].info,
-                                    style: KStyles.stdTextStyle),
-                          ))))
+                      )))
           ]),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () async {
-          final n = widget.storage.notes.length;
-          final note = KNote.defaults("Note $n");
-          final bool edited = await _editNote(note);
-          if (edited) {
-            setState(() {
-              widget.storage.notes.add(note);
-            });
-          }
-        },
-        tooltip: 'Add Note',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 

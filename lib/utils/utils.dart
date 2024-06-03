@@ -16,7 +16,6 @@ int str2cents(String value) {
 
   // Split the input by the decimal point
   final parts = value.split('.');
-
   // Extract the dollars and cents parts
   String dollars = parts[0];
   String cents = parts.length > 1 ? parts[1] : '';
@@ -55,4 +54,8 @@ mixin SaveStateMixin<T extends StatefulWidget> on State<T> {
     (widget as dynamic).saveFun(); // Call save function
     super.setState(fn); // Call original setState
   }
+}
+
+int invIdx(int idx, int l) {
+  return l - idx - 1;
 }

@@ -5,12 +5,27 @@ class KStyles {
   static const stdFontSize = 18.0;
   static final Color stdGrey = Colors.grey[50] ?? Colors.white;
   static final Color stdGreen = Colors.green[50] ?? Colors.white;
+  static final Color stdPurple = Colors.purple[50] ?? Colors.white;
 
   static const EdgeInsets stdEdgeInset =
-      EdgeInsets.only(left: 4.0, top: 4.0, bottom: 4.0);
+      EdgeInsets.only(left: 4.0, top: 4.0, bottom: 4.0, right: 4.0);
   static const SizedBox stdSizedBox = SizedBox(width: 10, height: 10);
   static const EdgeInsets stdEdgeInsetAmount =
       EdgeInsets.only(left: 22.0, top: 4.0, bottom: 4.0, right: 22.0);
+
+  static Container stdButton({
+    required VoidCallback onPressed,
+    required Icon icon,
+  }) {
+    return Container(
+      margin: KStyles.stdEdgeInset,
+      decoration: stdBoxDecoration(16.0),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: icon,
+      ),
+    );
+  }
 
   static const TextStyle stdTextStyle = TextStyle(
     fontSize: stdFontSize, // Set the desired font size
@@ -45,15 +60,19 @@ class KStyles {
 
   static Container stdDragHandle(int index) {
     return Container(
-        padding: const EdgeInsets.all(2.0),
-        decoration: BoxDecoration(
-          border: Border.all(),
-          borderRadius: BorderRadius.circular(6.0),
-        ),
+        decoration: KStyles.stdBoxDecoration(6.0),
         child: ReorderableDragStartListener(
           index: index,
           child: const Icon(Icons.drag_handle),
         ));
+  }
+
+  static BoxDecoration stdBoxDecoration(double radius) {
+    return BoxDecoration(
+      border: Border.all(),
+      borderRadius: BorderRadius.circular(radius),
+      color: KStyles.stdPurple,
+    );
   }
 
   static Color altGrey(int i) {

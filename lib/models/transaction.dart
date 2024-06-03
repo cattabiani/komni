@@ -90,4 +90,16 @@ class KTransaction {
       }
     }
   }
+
+  void one2one(
+      String name_, int amount_, int currency_, int creditor_, int debtor_) {
+    name = name_;
+    amount = amount_;
+    currency = currency_;
+    creditor = creditor_;
+    for (int i = 0; i < debts.length; ++i) {
+      debtors[i] = (i == debtor_);
+      debts[i] = i == debtor_ ? amount_ : 0;
+    }
+  }
 }

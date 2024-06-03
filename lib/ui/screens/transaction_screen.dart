@@ -4,7 +4,6 @@ import 'package:komni/models/transaction.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
 import 'package:komni/ui/screens/edit_list_screen.dart';
-// import 'package:komni/utils/utils.dart';
 
 class KTransactionScreen extends StatefulWidget {
   final KBalanceSheet balanceSheet;
@@ -64,175 +63,171 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: const Text('Edit Transaction', style: KStyles.stdTextStyle)),
-        body: Column(children: [
-          Container(
-              padding: KStyles.stdEdgeInset,
-              child: TextField(
-                controller: _nameController,
-                focusNode: _nameFocus,
-                style: KStyles.stdTextStyle,
-                onEditingComplete: () {
+      appBar: AppBar(
+        title: const Text('Edit Transaction', style: KStyles.stdTextStyle),
+        actions: [
+          KStyles.stdButton(
+              onPressed: () async {
+                final n = widget.balanceSheet.currencies.length;
+                final String s = "C $n";
+                final (newVal, edited) = await editItem(context, s);
+                if (edited) {
                   setState(() {
-                    widget.transaction.name = _nameController.text;
+                    widget.balanceSheet.addCurrency(newVal);
+                    widget.transaction.currency = n;
                   });
-                  _amountFocus.requestFocus();
-                },
-              )),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            Expanded(
-                child: Container(
-                    padding: KStyles.stdEdgeInsetAmount,
-                    child: TextField(
-                      focusNode: _amountFocus,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                          labelText: "Amount", border: OutlineInputBorder()),
-                      controller: _amountController,
-                      style: KStyles.stdTextStyle,
-                      onChanged: (_) {
-                        setState(() {
-                          widget.transaction.amount =
-                              str2cents(_amountController.text);
-                          if (!_unequalEditMode) {
-                            _distributeEqually();
-                          }
-                        });
-                      },
-                      onEditingComplete: () {
-                        FocusScope.of(context).unfocus();
-                      },
-                    ))),
-            Container(
-                padding: const EdgeInsets.only(
-                    left: 0.0, top: 4.0, bottom: 4.0, right: 8.0),
-                child: DropdownButton<int>(
-                    onChanged: (int? newIndex) {
-                      setState(() {
-                        widget.transaction.currency = newIndex ?? 0;
-                      });
-                    },
-                    value: widget.transaction.currency,
-                    items: List.generate(
-                      widget.balanceSheet.currencies.length,
-                      (index) => DropdownMenuItem<int>(
-                        value: index,
-                        child: Text(widget.balanceSheet.currencies[index]),
-                      ),
-                    )))
-          ]),
-          Container(
-              padding: KStyles.stdEdgeInset,
-              child: ListTile(
-                  leading: const Text("Creditor"),
-                  title: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _distributeEqually();
-                      });
-                    },
-                    child: const Text('Distribute Equally'),
-                  ),
-                  trailing: SizedBox(
-                      width: _trailingSizedBox,
-                      child: const Row(children: [
-                        Text("Debtor"),
-                        KStyles.stdSizedBox,
-                        Text("Amount"),
-                      ])))),
+                }
+              },
+              icon: const Icon(Icons.payments_outlined)),
+          KStyles.stdButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.check))
+        ],
+      ),
+      body: Column(children: [
+        Container(
+            padding: KStyles.stdEdgeInset,
+            child: TextField(
+              controller: _nameController,
+              focusNode: _nameFocus,
+              style: KStyles.stdTextStyle,
+              onChanged: (String s) {
+                widget.transaction.name = s;
+              },
+              onEditingComplete: () {
+                setState(() {
+                  widget.transaction.name = _nameController.text;
+                });
+                _amountFocus.requestFocus();
+              },
+            )),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
           Expanded(
-              child: ListView.builder(
-                  itemCount: widget.balanceSheet.people.length,
-                  itemBuilder: (context, index) {
-                    final person = widget.balanceSheet.people[index];
-                    return Container(
-                        padding: KStyles.stdEdgeInset,
-                        color: KStyles.altGrey(index),
-                        child: ListTile(
-                          title: Text(
-                            person,
-                            style: KStyles.stdTextStyle,
-                            textAlign: TextAlign.center,
-                          ),
-                          leading: Radio<int>(
-                              value: index,
-                              groupValue: widget.transaction.creditor,
-                              onChanged: (int? value) {
+              child: Container(
+                  padding: KStyles.stdEdgeInsetAmount,
+                  child: TextField(
+                    focusNode: _amountFocus,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                        labelText: "Amount", border: OutlineInputBorder()),
+                    controller: _amountController,
+                    style: KStyles.stdTextStyle,
+                    onChanged: (_) {
+                      setState(() {
+                        widget.transaction.amount =
+                            str2cents(_amountController.text);
+                        if (!_unequalEditMode) {
+                          _distributeEqually();
+                        }
+                      });
+                    },
+                    onEditingComplete: () {
+                      FocusScope.of(context).unfocus();
+                    },
+                  ))),
+          Container(
+              padding: const EdgeInsets.only(
+                  left: 0.0, top: 4.0, bottom: 4.0, right: 8.0),
+              child: DropdownButton<int>(
+                  onChanged: (int? newIndex) {
+                    setState(() {
+                      widget.transaction.currency = newIndex ?? 0;
+                    });
+                  },
+                  value: widget.transaction.currency,
+                  items: List.generate(
+                    widget.balanceSheet.currencies.length,
+                    (index) => DropdownMenuItem<int>(
+                      value: index,
+                      child: Text(widget.balanceSheet.currencies[index]),
+                    ),
+                  )))
+        ]),
+        Container(
+            padding: KStyles.stdEdgeInset,
+            child: ListTile(
+                leading: const Text("Creditor"),
+                title: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _distributeEqually();
+                    });
+                  },
+                  child: const Text('Distribute Equally'),
+                ),
+                trailing: SizedBox(
+                    width: _trailingSizedBox,
+                    child: const Row(children: [
+                      Text("Debtor"),
+                      KStyles.stdSizedBox,
+                      Text("Amount"),
+                    ])))),
+        Expanded(
+            child: ListView.builder(
+                itemCount: widget.balanceSheet.people.length,
+                itemBuilder: (context, index) {
+                  final person = widget.balanceSheet.people[index];
+                  return Container(
+                      padding: KStyles.stdEdgeInset,
+                      color: KStyles.altGrey(index),
+                      child: ListTile(
+                        title: Text(
+                          person,
+                          style: KStyles.stdTextStyle,
+                          textAlign: TextAlign.center,
+                        ),
+                        leading: Radio<int>(
+                            value: index,
+                            groupValue: widget.transaction.creditor,
+                            onChanged: (int? value) {
+                              setState(() {
+                                widget.transaction.creditor = value ?? -1;
+                                if (!_unequalEditMode) {
+                                  _distributeEqually();
+                                }
+                              });
+                            }),
+                        trailing: SizedBox(
+                          width: _trailingSizedBox,
+                          child: Row(children: [
+                            Checkbox(
+                              value: widget.transaction.debtors[index],
+                              onChanged: (value) {
                                 setState(() {
-                                  widget.transaction.creditor = value ?? -1;
+                                  widget.transaction.debtors[index] =
+                                      value ?? false;
                                   if (!_unequalEditMode) {
                                     _distributeEqually();
                                   }
                                 });
-                              }),
-                          trailing: SizedBox(
-                            width: _trailingSizedBox,
-                            child: Row(children: [
-                              Checkbox(
-                                value: widget.transaction.debtors[index],
-                                onChanged: (value) {
-                                  setState(() {
-                                    widget.transaction.debtors[index] =
-                                        value ?? false;
-                                    if (!_unequalEditMode) {
-                                      _distributeEqually();
-                                    }
-                                  });
-                                },
-                              ),
-                              SizedBox(
-                                  width: 72,
-                                  child: TextField(
-                                    readOnly:
-                                        !widget.transaction.debtors[index],
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    decoration: const InputDecoration(
-                                        labelText: "Amount",
-                                        border: OutlineInputBorder()),
-                                    controller: _amountControllerList[index],
-                                    style: KStyles.stdTextStyle,
-                                    onEditingComplete: () {
-                                      _unequalEdit(index);
-                                      FocusScope.of(context).unfocus();
-                                    },
-                                  ))
-                            ]),
-                          ),
-                        ));
-                  })),
-        ]),
-        floatingActionButton:
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          FloatingActionButton(
-            heroTag: null,
-            onPressed: () async {
-              final n = widget.balanceSheet.currencies.length;
-              final String s = "C $n";
-              final (newVal, edited) = await editItem(context, s);
-              if (edited) {
-                setState(() {
-                  widget.balanceSheet.addCurrency(newVal);
-                  widget.transaction.currency = n;
-                });
-              }
-            },
-            tooltip: 'Add Currency',
-            child: const Icon(Icons.payments_outlined),
-          ),
-          KStyles.stdSizedBox,
-          FloatingActionButton(
-            heroTag: null,
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            tooltip: 'Confirm',
-            child: const Icon(Icons.check),
-          ),
-        ]));
+                              },
+                            ),
+                            SizedBox(
+                                width: 72,
+                                child: TextField(
+                                  readOnly: !widget.transaction.debtors[index],
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
+                                  decoration: const InputDecoration(
+                                      labelText: "Amount",
+                                      border: OutlineInputBorder()),
+                                  controller: _amountControllerList[index],
+                                  style: KStyles.stdTextStyle,
+                                  onEditingComplete: () {
+                                    _unequalEdit(index);
+                                    FocusScope.of(context).unfocus();
+                                  },
+                                ))
+                          ]),
+                        ),
+                      ));
+                })),
+      ]),
+    );
   }
 
   void _updateAmountController() {
@@ -264,7 +259,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
         duration: Duration(seconds: 1),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      return; // Stop execution if value exceeds the limit
+      return;
     }
 
     if (!_unequalEditMode) {
@@ -280,7 +275,7 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
               cents2str(widget.transaction.debts[index], true);
         });
 
-        return; // Stop execution if value exceeds the limit
+        return;
       }
 
       _resetAmountController();
@@ -334,58 +329,4 @@ class _KTransactionScreenState extends State<KTransactionScreen> {
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
-
-  // _addCurrency() {
-  //         // final n = widget.balanceSheet.currencies.length;
-  //         // setState(() {
-  //         //   _addCurrency();
-  //         //   widget.transaction.currency = n;
-  //         // });
-
-  //   final TextEditingController nameController =
-  //       TextEditingController();
-  //   final nameFocus = FocusNode();
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Edit Currency'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: <Widget>[
-  //             TextField(
-  //               focusNode: nameFocus,
-  //               controller: nameController,
-  //               style: KStyles.stdTextStyle,
-  //               decoration: const InputDecoration(labelText: 'Currency'),
-  //             ),
-  //           ],
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Cancel'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //           TextButton(
-  //             child: const Text('Save'),
-  //             onPressed: () {
-  //               ans = true;
-  //               balanceSheet.people[index] = nameController.text;
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   ).then((_) {
-  //     nameController.dispose();
-  //     nameFocus.dispose();
-  //   });
-
-  //   nameFocus.requestFocus();
-  //   return ans;
-  // }
 }

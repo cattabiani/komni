@@ -40,7 +40,36 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Edit Balance Sheet', style: KStyles.stdTextStyle)),
+          title: const Text('Edit Balance Sheet', style: KStyles.stdTextStyle),
+          actions: [
+            KStyles.stdButton(
+                onPressed: _settle, icon: const Icon(Icons.handshake_outlined)),
+            KStyles.stdButton(
+                onPressed: _editCurrency,
+                icon: const Icon(Icons.payments_outlined)),
+            KStyles.stdButton(
+                onPressed: () async {
+                  final n = widget.balanceSheet.people.length;
+                  final String s = "Person $n";
+
+                  final (newVal, edited) = await editItem(context, s);
+                  if (edited) {
+                    setState(() {
+                      widget.balanceSheet.addPerson(newVal);
+                    });
+                  }
+                },
+                icon: const Icon(Icons.person_add)),
+            KStyles.stdButton(
+                onPressed: () {
+                  final n = widget.balanceSheet.ledger.length;
+                  setState(() {
+                    widget.balanceSheet.addTransaction();
+                  });
+                  _editTransaction(n);
+                },
+                icon: const Icon(Icons.add)),
+          ]),
       body: Column(children: [
         Container(
             padding: KStyles.stdEdgeInset,
@@ -48,6 +77,9 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
               focusNode: _nameFocus,
               controller: _nameController,
               style: KStyles.stdTextStyle,
+              onChanged: (String s) {
+                widget.balanceSheet.name = s;
+              },
               onEditingComplete: () {
                 setState(() {
                   widget.balanceSheet.name = _nameController.text;
@@ -100,105 +132,49 @@ class _KBalanceSheetScreenState extends State<KBalanceSheetScreen> {
                     child: Container(
                         color: widget.balanceSheet.ledger[index].creditor == -1
                             ? Colors.red[200]
-                            : KStyles.altGrey(
-                                widget.balanceSheet.ledger.length - index - 1),
-                        child: Padding(
-                            padding: KStyles.stdEdgeInset,
-                            child: ListTile(
-                              trailing: SizedBox(
-                                  width: 120,
-                                  child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Flexible(
-                                            flex: 1,
-                                            child: TextField(
-                                                readOnly: true,
-                                                textAlign: TextAlign.center,
-                                                decoration: InputDecoration(
-                                                    floatingLabelAlignment:
-                                                        FloatingLabelAlignment
-                                                            .center,
-                                                    floatingLabelBehavior:
-                                                        FloatingLabelBehavior
-                                                            .always,
-                                                    labelText: widget
-                                                            .balanceSheet
-                                                            .currencies[
-                                                        widget
-                                                            .balanceSheet
-                                                            .ledger[index]
-                                                            .currency],
-                                                    hintText: cents2str(
-                                                        widget
-                                                            .balanceSheet
-                                                            .ledger[index]
-                                                            .amount,
-                                                        false),
-                                                    border: InputBorder.none,
-                                                    hintStyle: KStyles
-                                                        .boldTextStyle))),
-                                        KStyles.stdSizedBox,
-                                        KStyles.stdDragHandle(index)
-                                      ])),
-                              onTap: () {
-                                _editTransaction(index);
-                              },
-                              title: Text(
-                                  widget.balanceSheet.ledger[index].name,
-                                  style: KStyles.stdTextStyle),
-                            ))))
+                            : KStyles.altGrey(invIdx(
+                                index, widget.balanceSheet.ledger.length)),
+                        child: ListTile(
+                          trailing: SizedBox(
+                              width: 120,
+                              child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Flexible(
+                                        flex: 1,
+                                        child: TextField(
+                                            readOnly: true,
+                                            textAlign: TextAlign.center,
+                                            decoration: InputDecoration(
+                                                floatingLabelAlignment:
+                                                    FloatingLabelAlignment
+                                                        .center,
+                                                floatingLabelBehavior:
+                                                    FloatingLabelBehavior
+                                                        .always,
+                                                labelText: widget.balanceSheet
+                                                        .currencies[
+                                                    widget
+                                                        .balanceSheet
+                                                        .ledger[index]
+                                                        .currency],
+                                                hintText: cents2str(
+                                                    widget.balanceSheet
+                                                        .ledger[index].amount,
+                                                    false),
+                                                border: InputBorder.none,
+                                                hintStyle:
+                                                    KStyles.boldTextStyle))),
+                                    KStyles.stdSizedBox,
+                                    KStyles.stdDragHandle(index)
+                                  ])),
+                          onTap: () {
+                            _editTransaction(index);
+                          },
+                          title: Text(widget.balanceSheet.ledger[index].name,
+                              style: KStyles.stdTextStyle),
+                        )))
             ])),
-      ]),
-      floatingActionButton:
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-        FloatingActionButton(
-          heroTag: null,
-          onPressed: () {
-            _settle();
-          },
-          tooltip: 'Settle',
-          child: const Icon(Icons.handshake_outlined),
-        ),
-        KStyles.stdSizedBox,
-        FloatingActionButton(
-          heroTag: null,
-          onPressed: () {
-            _editCurrency();
-          },
-          tooltip: 'Edit Currencies',
-          child: const Icon(Icons.payments_outlined),
-        ),
-        KStyles.stdSizedBox,
-        FloatingActionButton(
-          heroTag: null,
-          onPressed: () async {
-            final n = widget.balanceSheet.people.length;
-            final String s = "Person $n";
-
-            final (newVal, edited) = await editItem(context, s);
-            if (edited) {
-              setState(() {
-                widget.balanceSheet.addPerson(newVal);
-              });
-            }
-          },
-          tooltip: 'Add Person',
-          child: const Icon(Icons.person_add),
-        ),
-        KStyles.stdSizedBox,
-        FloatingActionButton(
-          heroTag: null,
-          onPressed: () {
-            final n = widget.balanceSheet.ledger.length;
-            setState(() {
-              widget.balanceSheet.addTransaction();
-            });
-            _editTransaction(n);
-          },
-          tooltip: 'Add Transaction',
-          child: const Icon(Icons.add),
-        ),
       ]),
     );
   }

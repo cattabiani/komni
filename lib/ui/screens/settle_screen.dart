@@ -3,6 +3,7 @@ import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
 import 'package:tuple/tuple.dart';
+import 'package:komni/ui/screens/partial_settle_screen.dart';
 
 class KSettleScreen extends StatefulWidget {
   final KBalanceSheet balanceSheet;
@@ -31,34 +32,37 @@ class _KSettleScreenState extends State<KSettleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settle', style: KStyles.stdTextStyle)),
+      appBar: AppBar(
+          title: const Text('Settle', style: KStyles.stdTextStyle),
+          actions: [
+            KStyles.stdButton(
+                onPressed: _showSettleConfirmationDialog,
+                icon: const Icon(Icons.handshake_outlined)),
+            KStyles.stdButton(
+                onPressed: _partialSettle,
+                icon: const Icon(Icons.compare_arrows))
+          ]),
       body: Column(children: [
-        Padding(
-            padding: KStyles.stdEdgeInsetAmount,
-            child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: Colors.grey),
-                  color: KStyles.stdGrey,
-                ),
-                child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                  value: _person,
-                  items:
-                      List.generate(widget.balanceSheet.people.length, (index) {
-                    return DropdownMenuItem<int>(
-                        alignment: Alignment.center,
-                        value: index,
-                        child: Text(widget.balanceSheet.people[index],
-                            style: KStyles.stdTextStyle));
-                  }),
-                  onChanged: (int? newValue) {
-                    setState(() {
-                      _update(newValue ?? 0);
-                    });
-                  },
-                  isExpanded: true,
-                )))),
+        Container(
+            margin: KStyles.stdEdgeInset,
+            decoration: KStyles.stdBoxDecoration(16.0),
+            child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+              value: _person,
+              items: List.generate(widget.balanceSheet.people.length, (index) {
+                return DropdownMenuItem<int>(
+                    alignment: Alignment.center,
+                    value: index,
+                    child: Text(widget.balanceSheet.people[index],
+                        style: KStyles.stdTextStyle));
+              }),
+              onChanged: (int? newValue) {
+                setState(() {
+                  _update(newValue ?? 0);
+                });
+              },
+              isExpanded: true,
+            ))),
         Expanded(
             child: ListView.builder(
           itemCount: _recap.length,
@@ -78,14 +82,6 @@ class _KSettleScreenState extends State<KSettleScreen> {
           },
         )),
       ]),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () {
-          _showSettleConfirmationDialog();
-        },
-        tooltip: 'Settle',
-        child: const Icon(Icons.handshake_outlined),
-      ),
     );
   }
 
@@ -126,6 +122,22 @@ class _KSettleScreenState extends State<KSettleScreen> {
     return Container(
         color: backgroundColor,
         child: ListTile(title: title, trailing: trailing));
+  }
+
+  _partialSettle() {
+    FocusScope.of(context).unfocus();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KPartialSettleScreen(
+          balanceSheet: widget.balanceSheet,
+        ),
+      ),
+    ).then((_) {
+      setState(() {
+        _update(_person);
+      });
+    });
   }
 
   void _showSettleConfirmationDialog() {

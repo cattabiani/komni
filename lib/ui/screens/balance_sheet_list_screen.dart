@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/models/storage.dart';
 import 'package:komni/utils/styles.dart';
+import 'package:komni/utils/utils.dart';
 import 'package:komni/ui/screens/balance_sheet_screen.dart';
 
 class KBalanceSheetListScreen extends StatefulWidget {
@@ -28,6 +29,18 @@ class _KBalanceSheetListScreenState extends State<KBalanceSheetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(actions: [
+        KStyles.stdButton(
+            onPressed: () {
+              final n = widget.storage.balanceSheets.length;
+              setState(() {
+                widget.storage.balanceSheets
+                    .add(KBalanceSheet.defaults("Balance Sheet $n"));
+              });
+              _editBalanceSheet(n);
+            },
+            icon: const Icon(Icons.add))
+      ]),
       body: ReorderableListView(
           onReorder: (int oldIndex, int newIndex) {
             setState(() {
@@ -56,32 +69,16 @@ class _KBalanceSheetListScreenState extends State<KBalanceSheetListScreen> {
                   background: KStyles.stdBackgroundDelete,
                   child: Container(
                       color: KStyles.altGrey(
-                          widget.storage.balanceSheets.length - index - 1),
-                      child: Padding(
-                          padding: KStyles.stdEdgeInset,
-                          child: ListTile(
-                            trailing: KStyles.stdDragHandle(index),
-                            onTap: () {
-                              _editBalanceSheet(index);
-                            },
-                            title: Text(
-                                widget.storage.balanceSheets[index].name,
-                                style: KStyles.stdTextStyle),
-                          ))))
+                          invIdx(index, widget.storage.balanceSheets.length)),
+                      child: ListTile(
+                        trailing: KStyles.stdDragHandle(index),
+                        onTap: () {
+                          _editBalanceSheet(index);
+                        },
+                        title: Text(widget.storage.balanceSheets[index].name,
+                            style: KStyles.stdTextStyle),
+                      )))
           ]),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () {
-          final n = widget.storage.balanceSheets.length;
-          setState(() {
-            widget.storage.balanceSheets
-                .add(KBalanceSheet.defaults("Balance Sheet $n"));
-          });
-          _editBalanceSheet(n);
-        },
-        tooltip: 'Add Balance Sheet',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
