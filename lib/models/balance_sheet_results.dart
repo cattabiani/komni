@@ -95,7 +95,7 @@ class KBalanceSheetResults {
       for (int j = 0; j < _mat[i].length; ++j) {
         final vij = _mat[i][j];
         if (vij == 0) continue;
-        for (int k = j+1; k < _mat[i].length; ++k) {
+        for (int k = j + 1; k < _mat[i].length; ++k) {
           final vik = _mat[i][k];
           if (vik == 0) continue;
           final vjk = get(j, k);
@@ -151,7 +151,7 @@ class KBalanceSheetResults {
       int minv = -1;
       for (int i = 0; i < c.length; ++i) {
         final int p0 = c[i];
-        final int p1 = c[(i+1)%c.length];
+        final int p1 = c[(i + 1) % c.length];
         final int v = get(p0, p1).abs();
         if (minv == -1 || v < minv) {
           minv = v;
@@ -160,7 +160,7 @@ class KBalanceSheetResults {
 
       for (int i = 0; i < c.length; ++i) {
         final int p0 = c[i];
-        final int p1 = c[(i+1)%c.length];
+        final int p1 = c[(i + 1) % c.length];
         final int v = get(p0, p1).abs();
         add(p0, p1, v > 0 ? minv : -minv);
       }
@@ -227,4 +227,3 @@ class KBalanceSheetResults {
     return sccs.where((scc) => scc.length > 1).toList();
   }
 }
-

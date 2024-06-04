@@ -177,7 +177,12 @@ class KBalanceSheet {
         amount = -amount;
       }
       final t = KTransaction.one2one(
-          "Settle ${people[creditor]} ${ledger.length}", amount, currency, creditor, people.length, debtor);
+          "Settle ${people[creditor]} ${ledger.length}",
+          amount,
+          currency,
+          creditor,
+          people.length,
+          debtor);
       ledger.add(t);
       applyTransaction(ledger.length - 1, 1);
     }
