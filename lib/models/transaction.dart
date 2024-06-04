@@ -32,6 +32,24 @@ class KTransaction {
         debtors = List<bool>.generate(n, (_) => true, growable: true),
         debts = List<int>.generate(n, (_) => 0, growable: true);
 
+  KTransaction.one2one(
+      this.name, this.amount, this.currency, this.creditor, int n, int debtor)
+      : debtors = List<bool>.generate(n, (i) => (i == debtor), growable: true),
+        debts = List<int>.generate(n, (i) => (i == debtor) ? amount : 0,
+            growable: true);
+
+  void one2one(
+      String name_, int amount_, int currency_, int creditor_, int debtor_) {
+    name = name_;
+    amount = amount_;
+    currency = currency_;
+    creditor = creditor_;
+    for (int i = 0; i < debts.length; ++i) {
+      debtors[i] = (i == debtor_);
+      debts[i] = i == debtor_ ? amount_ : 0;
+    }
+  }
+
   void addPerson() {
     debtors.add(false);
     debts.add(0);
@@ -88,18 +106,6 @@ class KTransaction {
       } else {
         debts[i] = 0;
       }
-    }
-  }
-
-  void one2one(
-      String name_, int amount_, int currency_, int creditor_, int debtor_) {
-    name = name_;
-    amount = amount_;
-    currency = currency_;
-    creditor = creditor_;
-    for (int i = 0; i < debts.length; ++i) {
-      debtors[i] = (i == debtor_);
-      debts[i] = i == debtor_ ? amount_ : 0;
     }
   }
 }

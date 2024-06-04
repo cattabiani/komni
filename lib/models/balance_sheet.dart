@@ -1,7 +1,6 @@
 import 'package:hive/hive.dart';
 import 'transaction.dart';
 import 'balance_sheet_results.dart';
-import 'package:tuple/tuple.dart';
 
 part 'balance_sheet.g.dart';
 
@@ -12,7 +11,7 @@ class KBalanceSheet {
   @HiveField(1)
   List<KTransaction> ledger;
   @HiveField(2)
-  KBalanceSheetResults results;
+  List<KBalanceSheetResults> results;
   @HiveField(3)
   List<String> people;
   @HiveField(4)
@@ -23,6 +22,78 @@ class KBalanceSheet {
   KBalanceSheet(this.name, this.ledger, this.results, this.people,
       this.currencies, this.isEditTransactionMode) {
     endEditTransaction();
+  }
+
+  KBalanceSheet.defaults(this.name)
+      : ledger = [],
+        results = [],
+        people = [],
+        currencies = [],
+        isEditTransactionMode = -1 {
+    addPerson("self");
+    addCurrency("EUR");
+    addCurrency("CHF");
+  }
+
+  void addPerson(String s) {
+    for (var r in results) {
+      r.addPerson();
+    }
+    people.add(s);
+    for (var t in ledger) {
+      t.addPerson();
+    }
+  }
+
+  bool _isPersonRemovable(int p) {
+    bool ans = true;
+    for (var r in results) {
+      ans = r.isPersonRemovable(p);
+      if (ans == false) return false;
+    }
+    for (var t in ledger) {
+      ans = t.isPersonRemovable(p);
+      if (ans == false) return false;
+    }
+    return true;
+  }
+
+  bool removePerson(int p) {
+    if (_isPersonRemovable(p) == false) return false;
+    for (var r in results) {
+      r.removePerson(p);
+    }
+    people.removeAt(p);
+    for (var t in ledger) {
+      t.removePerson(p);
+    }
+    return true;
+  }
+
+  void addCurrency(String s) {
+    s = s.substring(0, 3).toUpperCase();
+    results.add(KBalanceSheetResults.defaults(people.length));
+    currencies.add(s);
+  }
+
+  bool _isCurrencyRemovable(int c) {
+    bool ans = results[c].isRemovable();
+    if (ans == false) return false;
+    for (var t in ledger) {
+      ans = t.isCurrencyRemovable(c);
+      if (ans == false) return false;
+    }
+    return true;
+  }
+
+  bool removeCurrency(int c) {
+    if (_isCurrencyRemovable(c) == false) return false;
+    results.removeAt(c);
+    currencies.removeAt(c);
+    for (var t in ledger) {
+      t.removeCurrency(c);
+    }
+    return true;
   }
 
   void beginEditTransaction(int index) {
@@ -40,54 +111,6 @@ class KBalanceSheet {
       applyTransaction(isEditTransactionMode, 1);
       isEditTransactionMode = -1;
     }
-  }
-
-  KBalanceSheet.defaults(this.name)
-      : ledger = [],
-        results = KBalanceSheetResults.defaults(),
-        people = ["self"],
-        currencies = ["EUR", "CHF"],
-        isEditTransactionMode = -1;
-
-  void addPerson(String s) {
-    for (var element in ledger) {
-      element.addPerson();
-    }
-    people.add(s);
-  }
-
-  void removePerson(int index) {
-    for (var element in ledger) {
-      element.removePerson(index);
-    }
-
-    results.removePerson(index);
-    people.removeAt(index);
-  }
-
-  void removeCurrency(int index) {
-    for (var element in ledger) {
-      element.removeCurrency(index);
-    }
-
-    results.removeCurrency(index);
-    currencies.removeAt(index);
-  }
-
-  bool isPersonRemovable(int index) {
-    for (int i = 0; i < ledger.length; ++i) {
-      if (!ledger[i].isPersonRemovable(index)) return false;
-    }
-
-    return true;
-  }
-
-  bool isCurrencyRemovable(int index) {
-    for (int i = 0; i < ledger.length; ++i) {
-      if (!ledger[i].isCurrencyRemovable(index)) return false;
-    }
-
-    return true;
   }
 
   void addOne2oneTransaction(
@@ -116,7 +139,7 @@ class KBalanceSheet {
 
     for (int i = 0; i < t.debts.length; ++i) {
       if (t.debtors[i]) {
-        results.applyTransaction(t.currency, i, t.creditor, t.debts[i] * multi);
+        results[t.currency].add(i, t.creditor, t.debts[i] * multi);
       }
     }
   }
@@ -126,32 +149,35 @@ class KBalanceSheet {
     return ledger.removeAt(index);
   }
 
-  void addCurrency(String s) {
-    s = s.substring(0, 3).toUpperCase();
-    if (currencies.contains(s)) {
-      return;
+  List<List<int>> recapPerson(int person) {
+    List<List<int>> ans = [];
+    for (int i = 0; i < results.length; ++i) {
+      final r = results[i];
+      final v = r.recap(person);
+      v.sort((a, b) {
+        return (a[1] == b[1]) ? a[0].compareTo(b[0]) : a[1].compareTo(b[1]);
+      });
+      for (var t in v) {
+        ans.add([i, t[0], t[1]]);
+      }
     }
-    currencies.add(s);
+    return ans;
   }
 
-  List<Tuple3<int, int, int>> personRecap(int person) {
-    return results.personRecap(person);
-  }
-
-  settlePerson(int person, List<Tuple3<int, int, int>> recap) {
+  void settlePerson(int creditor) {
+    final recap = recapPerson(creditor);
     for (int i = 0; i < recap.length; ++i) {
-      final curr = recap[i].item1;
-      final amount = recap[i].item2 < 0 ? -recap[i].item2 : recap[i].item2;
-      final person0 = recap[i].item2 > 0 ? person : recap[i].item3;
-      final person1 = recap[i].item2 < 0 ? person : recap[i].item3;
-      final debtors = List<bool>.generate(
-          people.length, (index) => index == person1,
-          growable: true);
-      final debts = List<int>.generate(
-          people.length, (index) => index == person1 ? amount : 0,
-          growable: true);
-      final t = KTransaction(
-          "Settle ${people[person]} $i", amount, person0, debtors, debts, curr);
+      int amount = recap[i][2];
+      if (amount == 0) continue;
+
+      final currency = recap[i][0];
+      int debtor = recap[i][1];
+      if (amount < 0) {
+        (creditor, debtor) = (debtor, creditor);
+        amount = -amount;
+      }
+      final t = KTransaction.one2one(
+          "Settle ${people[creditor]} ${ledger.length}", amount, currency, creditor, people.length, debtor);
       ledger.add(t);
       applyTransaction(ledger.length - 1, 1);
     }

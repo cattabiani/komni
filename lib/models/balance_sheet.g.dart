@@ -19,7 +19,7 @@ class KBalanceSheetAdapter extends TypeAdapter<KBalanceSheet> {
     return KBalanceSheet(
       fields[0] as String,
       (fields[1] as List).cast<KTransaction>(),
-      fields[2] as KBalanceSheetResults,
+      (fields[2] as List).cast<KBalanceSheetResults>(),
       (fields[3] as List).cast<String>(),
       (fields[4] as List).cast<String>(),
       fields[5] as int,

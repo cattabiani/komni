@@ -17,7 +17,7 @@ class KBalanceSheetResultsAdapter extends TypeAdapter<KBalanceSheetResults> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return KBalanceSheetResults(
-      (fields[0] as Map).cast<Tuple3<int, int, int>, int>(),
+      (fields[0] as List).map((dynamic e) => (e as List).cast<int>()).toList(),
     );
   }
 
@@ -26,7 +26,7 @@ class KBalanceSheetResultsAdapter extends TypeAdapter<KBalanceSheetResults> {
     writer
       ..writeByte(1)
       ..writeByte(0)
-      ..write(obj._s);
+      ..write(obj._mat);
   }
 
   @override

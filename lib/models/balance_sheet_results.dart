@@ -1,189 +1,230 @@
 import 'package:hive/hive.dart';
-import 'package:tuple/tuple.dart';
 
 part 'balance_sheet_results.g.dart';
 
 @HiveType(typeId: 4)
 class KBalanceSheetResults {
   @HiveField(0)
-  final Map<Tuple3<int, int, int>, int> _s;
+  final List<List<int>> _mat;
 
-  KBalanceSheetResults(this._s);
-  KBalanceSheetResults.defaults() : _s = {};
-
-  (int, int, int) keySwap({required int b, required int c, int v = 0}) {
-    if (b < c) return (b, c, v);
-    return (c, b, -v);
-  }
-
-  void applyTransaction(int curr, int person0, int person1, int amount) {
-    // print("Apply: $curr, $person0, $person1, $amount");
-    if (amount == 0 || person0 == person1 || person0 < 0 || person1 < 0) {
-      return;
+  KBalanceSheetResults(this._mat);
+  KBalanceSheetResults.defaults(int n) : _mat = [] {
+    for (int i = 0; i < n; ++i) {
+      addPerson();
     }
-    (person0, person1, amount) = keySwap(b: person0, c: person1, v: amount);
-
-    final key = Tuple3(curr, person0, person1);
-    _s[key] = amount + (_s[key] ?? 0);
-    // we do not remove keys with 0 values for performance
   }
 
-  void removePerson(int person) {
-    // print("remove person $person");
-    final Map<Tuple3<int, int, int>, int> modifiedMap = {};
+  void set(int person0, int person1, int amount) {
+    if (person0 == person1) return;
+    if (person0 > person1) {
+      _mat[person0][person1] = amount;
+    } else {
+      _mat[person1][person0] = -amount;
+    }
+  }
 
-    _s.forEach((key, value) {
-      var item2 = key.item2;
-      var item3 = key.item3;
-      if (item2 != person && item3 != person) {
-        if (item2 > person) item2--;
-        if (item3 > person) item3--;
+  int get(int person0, int person1) {
+    if (person0 == person1) return 0;
+    if (person0 > person1) {
+      return _mat[person0][person1];
+    } else {
+      return -_mat[person1][person0];
+    }
+  }
 
-        final modifiedKey = Tuple3(key.item1, item2, item3);
-        modifiedMap[modifiedKey] = value;
+  void add(int person0, int person1, int amount) {
+    if (person0 == person1) return;
+    if (person0 > person1) {
+      _mat[person0][person1] += amount;
+    } else {
+      _mat[person1][person0] -= amount;
+    }
+  }
+
+  void addPerson() {
+    _mat.add(List<int>.generate(_mat.length, (_) => 0, growable: true));
+  }
+
+  void removePerson(int p) {
+    for (int i = p + 1; p < _mat.length; ++i) {
+      _mat[i].removeAt(p);
+    }
+    _mat.removeAt(p);
+  }
+
+  bool isPersonRemovable(int p) {
+    for (int i = p + 1; p < _mat.length; ++i) {
+      if (_mat[i][p] != 0) return false;
+    }
+    return _mat[p].every((element) => element == 0);
+  }
+
+  bool isRemovable() {
+    for (int i = 0; i < _mat.length; ++i) {
+      bool ans = _mat[i].every((element) => element == 0);
+      if (ans == false) return false;
+    }
+    return true;
+  }
+
+  List<List<int>> recap(int p) {
+    _simplify();
+
+    List<List<int>> ans = [];
+    for (int i = 0; i < _mat[p].length; ++i) {
+      if (_mat[p][i] != 0) {
+        ans.add([i, _mat[p][i]]);
       }
-    });
-
-    _s.clear();
-    _s.addAll(modifiedMap);
-  }
-
-  void removeCurrency(int index) {
-    final Map<Tuple3<int, int, int>, int> modifiedMap = {};
-
-    _s.forEach((key, value) {
-      var item1 = key.item1;
-      if (item1 != index) {
-        if (item1 > index) item1--;
-
-        final modifiedKey = Tuple3(item1, key.item2, key.item3);
-        modifiedMap[modifiedKey] = value;
+    }
+    for (int i = p + 1; i < _mat.length; ++i) {
+      if (_mat[i][p] != 0) {
+        ans.add([i, -_mat[i][p]]);
       }
-    });
+    }
 
-    _s.clear();
-    _s.addAll(modifiedMap);
+    return ans;
   }
 
-  List<Tuple3<int, int, int>> personRecap(int person) {
+  void _simplify() {
     _simplifyLoops();
-
-    final List<Tuple3<int, int, int>> v = [];
-    _s.forEach((key, value) {
-      if ((key.item2 == person || key.item3 == person) && value != 0) {
-        final multi = key.item2 == person ? 1 : -1;
-        final other = key.item2 == person ? key.item3 : key.item2;
-        v.add(Tuple3(key.item1, multi * value, other));
-      }
-    });
-    v.sort((a, b) {
-      if (a.item1 != b.item1) {
-        return a.item1.compareTo(b.item1);
-      } else if (a.item2 != b.item2) {
-        return a.item2.compareTo(b.item2);
-      } else {
-        return a.item3.compareTo(b.item3);
-      }
-    });
-
-    return v;
+    _simplifyTriangles();
   }
 
-  _simplifyLoops() {
-    final loops = _findLoops();
+  void _simplifyTriangles() {
+    for (int i = 0; i < _mat.length; ++i) {
+      for (int j = 0; j < _mat[i].length; ++j) {
+        final vij = _mat[i][j];
+        if (vij == 0) continue;
+        for (int k = j+1; k < _mat[i].length; ++k) {
+          final vik = _mat[i][k];
+          if (vik == 0) continue;
+          final vjk = get(j, k);
+          if (vjk == 0) continue;
 
-    loops.forEach((graphId, graphLoops) {
-      for (var loop in graphLoops) {
-        int mev = -1;
-        for (int i = 0; i < loop.length; i++) {
-          int fromNode = loop[i];
-          int toNode = loop[(i + 1) % loop.length];
-          (fromNode, toNode, _) = keySwap(b: fromNode, c: toNode);
-          final key = Tuple3<int, int, int>(graphId, fromNode, toNode);
-          final value = _s[key] ?? 0;
-          if ((value.abs() < mev || mev < 0) && value != 0) {
-            mev = value.abs();
+          // List<int> t = [];
+          if (vij > 0 && vik > 0 && vjk < 0) {
+            // t = [i, k, j];
+            final int q = vik > -vjk ? -vjk : vik;
+            _mat[i][j] += q;
+            _mat[i][k] -= q;
+            add(j, k, q);
+          } else if (vij > 0 && vik < 0 && vjk < 0) {
+            // t = [k, i, j];
+            final int q = -vik > vij ? vij : -vik;
+            _mat[i][j] -= q;
+            _mat[i][k] += q;
+            add(j, k, -q);
+          } else if (vij < 0 && vik > 0 && vjk > 0) {
+            // t = [j, i, k];
+            final int q = vik > -vij ? -vij : vik;
+            _mat[i][j] += q;
+            _mat[i][k] -= q;
+            add(j, k, q);
+          } else if (vij > 0 && vik > 0 && vjk > 0) {
+            // t = [i, j, k];
+            final int q = vjk > vij ? vij : vjk;
+            _mat[i][j] -= q;
+            _mat[i][k] += q;
+            add(j, k, -q);
+          } else if (vij < 0 && vik < 0 && vjk < 0) {
+            // t = [k, j, i];
+            final int q = -vjk > -vij ? -vij : -vjk;
+            _mat[i][j] += q;
+            _mat[i][k] -= q;
+            add(j, k, q);
+          } else if (vij < 0 && vik < 0 && vjk > 0) {
+            // t = [j, k, i];
+            final int q = -vik > vjk ? vjk : -vik;
+            _mat[i][j] -= q;
+            _mat[i][k] += q;
+            add(j, k, -q);
           }
+          // print("$t $i $j $k $vij $vik $vjk");
         }
-
-        if (mev > 0) {
-          for (int i = 0; i < loop.length; i++) {
-            int fromNode = loop[i];
-            int toNode = loop[(i + 1) % loop.length];
-            (fromNode, toNode, _) = keySwap(b: fromNode, c: toNode);
-            final key = Tuple3<int, int, int>(graphId, fromNode, toNode);
-            final value = _s[key] ?? 0;
-            _s[key] = value > 0 ? value - mev : value + mev;
-          }
-        }
-      }
-    });
-  }
-
-// Function to detect loops in all graphs
-  Map<int, List<List<int>>> _findLoops() {
-    Map<int, Map<int, List<int>>> graphs = {};
-
-    // Parse the results to build adjacency lists
-    _s.forEach((key, value) {
-      int graphId = key.item1;
-      int fromNode = value > 0 ? key.item2 : key.item3;
-      int toNode = value > 0 ? key.item3 : key.item2;
-
-      if (value == 0) return; // Ignore if value is 0
-
-      graphs.putIfAbsent(graphId, () => {});
-      graphs[graphId]!.putIfAbsent(fromNode, () => []);
-      graphs[graphId]![fromNode]!.add(toNode);
-    });
-
-    // Detect loops in each graph
-    Map<int, List<List<int>>> allLoops = {};
-    graphs.forEach((graphId, adjList) {
-      List<List<int>> loops = _detectCycles(adjList);
-      if (loops.isNotEmpty) {
-        allLoops[graphId] = loops;
-      }
-    });
-
-    return allLoops;
-  }
-
-// Function to detect cycles in a graph using DFS
-  List<List<int>> _detectCycles(Map<int, List<int>> adjList) {
-    List<List<int>> cycles = [];
-    Set<int> visited = {};
-    Set<int> stack = {};
-    List<int> path = [];
-
-    void dfs(int node) {
-      if (stack.contains(node)) {
-        int index = path.indexOf(node);
-        cycles.add(path.sublist(index));
-        return;
-      }
-      if (visited.contains(node)) return;
-
-      visited.add(node);
-      stack.add(node);
-      path.add(node);
-
-      if (adjList.containsKey(node)) {
-        for (int neighbor in adjList[node]!) {
-          dfs(neighbor);
-        }
-      }
-
-      stack.remove(node);
-      path.removeLast();
-    }
-
-    for (int node in adjList.keys) {
-      if (!visited.contains(node)) {
-        dfs(node);
       }
     }
+  }
 
-    return cycles;
+  void _simplifyLoops() {
+    final loops = _getLoops();
+    for (var c in loops) {
+      int minv = -1;
+      for (int i = 0; i < c.length; ++i) {
+        final int p0 = c[i];
+        final int p1 = c[(i+1)%c.length];
+        final int v = get(p0, p1).abs();
+        if (minv == -1 || v < minv) {
+          minv = v;
+        }
+      }
+
+      for (int i = 0; i < c.length; ++i) {
+        final int p0 = c[i];
+        final int p1 = c[(i+1)%c.length];
+        final int v = get(p0, p1).abs();
+        add(p0, p1, v > 0 ? minv : -minv);
+      }
+    }
+  }
+
+  List<List<int>> _getLoops() {
+    int n = _mat.length;
+    List<int> index = List.filled(n, -1);
+    List<int> lowlink = List.filled(n, -1);
+    List<bool> onStack = List.filled(n, false);
+    List<int> stack = [];
+    List<List<int>> sccs = [];
+    int currentIndex = 0;
+
+    void strongConnect(int v) {
+      index[v] = currentIndex;
+      lowlink[v] = currentIndex;
+      currentIndex++;
+      stack.add(v);
+      onStack[v] = true;
+
+      for (int j = 0; j < v; j++) {
+        if (_mat[v][j] > 0) {
+          int w = j;
+          if (index[w] == -1) {
+            strongConnect(w);
+            lowlink[v] = lowlink[v] < lowlink[w] ? lowlink[v] : lowlink[w];
+          } else if (onStack[w]) {
+            lowlink[v] = lowlink[v] < index[w] ? lowlink[v] : index[w];
+          }
+        }
+      }
+
+      for (int w = v + 1; w < n; w++) {
+        if (_mat[w][v] < 0) {
+          if (index[w] == -1) {
+            strongConnect(w);
+            lowlink[v] = lowlink[v] < lowlink[w] ? lowlink[v] : lowlink[w];
+          } else if (onStack[w]) {
+            lowlink[v] = lowlink[v] < index[w] ? lowlink[v] : index[w];
+          }
+        }
+      }
+
+      if (lowlink[v] == index[v]) {
+        List<int> scc = [];
+        int w;
+        do {
+          w = stack.removeLast();
+          onStack[w] = false;
+          scc.add(w);
+        } while (w != v);
+        sccs.add(scc);
+      }
+    }
+
+    for (int i = 0; i < n; i++) {
+      if (index[i] == -1) {
+        strongConnect(i);
+      }
+    }
+
+    return sccs.where((scc) => scc.length > 1).toList();
   }
 }
+

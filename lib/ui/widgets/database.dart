@@ -5,7 +5,6 @@ import 'package:komni/models/note.dart';
 import 'package:komni/models/transaction.dart';
 import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/models/balance_sheet_results.dart';
-import 'package:komni/models/tuple3.g.dart';
 import 'package:komni/ui/screens/home_screen.dart';
 
 class KDatabase extends StatefulWidget {
@@ -18,7 +17,6 @@ class KDatabase extends StatefulWidget {
     Hive.registerAdapter(KBalanceSheetAdapter());
     Hive.registerAdapter(KBalanceSheetResultsAdapter());
     Hive.registerAdapter(KTransactionAdapter());
-    Hive.registerAdapter(Tuple3Adapter());
     // await Hive.deleteBoxFromDisk('KOmniBox');
     await Hive.openBox<KStorage>('KOmniBox');
   }

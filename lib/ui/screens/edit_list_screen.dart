@@ -6,8 +6,7 @@ import 'package:komni/utils/utils.dart';
 
 class KEditListScreen extends StatefulWidget {
   final List<String> l;
-  final bool Function(int index)? isRemovable;
-  final void Function(int index)? removeAt;
+  final bool Function(int index)? removeAt;
   final Icon icon;
   final String newItemBaseName;
   final String title;
@@ -15,7 +14,6 @@ class KEditListScreen extends StatefulWidget {
   const KEditListScreen(
       {super.key,
       required this.l,
-      this.isRemovable,
       this.removeAt,
       required this.icon,
       this.newItemBaseName = "Item",
@@ -64,14 +62,14 @@ class _KEditListScreenState extends State<KEditListScreen> {
                 direction: DismissDirection.startToEnd,
                 onDismissed: (direction) {
                   setState(() {
-                    if (widget.isRemovable == null ||
-                        widget.isRemovable!(index)) {
-                      if (widget.removeAt != null) {
-                        widget.removeAt!(index);
-                      } else {
-                        widget.l.removeAt(index);
-                      }
+                    bool removed = true;
+                    if (widget.removeAt != null) {
+                      removed = widget.removeAt!(index);
                     } else {
+                      widget.l.removeAt(index);
+                    }
+
+                    if (!removed) {
                       // Showing error message
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

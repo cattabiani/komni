@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:komni/models/balance_sheet.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
-import 'package:tuple/tuple.dart';
 import 'package:komni/ui/screens/partial_settle_screen.dart';
 
 class KSettleScreen extends StatefulWidget {
@@ -16,7 +15,7 @@ class KSettleScreen extends StatefulWidget {
 
 class _KSettleScreenState extends State<KSettleScreen> {
   int _person = 0;
-  List<Tuple3<int, int, int>> _recap = [];
+  List<List<int>> _recap = [];
 
   @override
   void initState() {
@@ -68,9 +67,9 @@ class _KSettleScreenState extends State<KSettleScreen> {
           itemCount: _recap.length,
           itemBuilder: (context, index) {
             final v = _recap[index];
-            final curr = widget.balanceSheet.currencies[v.item1];
-            final amount = v.item2;
-            final person1 = widget.balanceSheet.people[v.item3];
+            final curr = widget.balanceSheet.currencies[v[0]];
+            final amount = v[2];
+            final person1 = widget.balanceSheet.people[v[1]];
             final person0 = widget.balanceSheet.people[_person];
 
             return _buildRecapLine(
@@ -87,7 +86,7 @@ class _KSettleScreenState extends State<KSettleScreen> {
 
   void _update(int newValue) {
     _person = newValue;
-    _recap = widget.balanceSheet.personRecap(_person);
+    _recap = widget.balanceSheet.recapPerson(_person);
   }
 
   Widget _buildRecapLine(
@@ -167,10 +166,10 @@ class _KSettleScreenState extends State<KSettleScreen> {
                 onPressed: () {
                   setState(() {
                     // Replace with your actual logic
-                    widget.balanceSheet.settlePerson(_person, _recap);
+                    widget.balanceSheet.settlePerson(_person);
                     _update(_person);
                   });
-                  Navigator.of(context).pop(); // Dismiss the dialog
+                  Navigator.of(context).pop(); // Dismiss the dialogG
                 },
               ),
             ],
