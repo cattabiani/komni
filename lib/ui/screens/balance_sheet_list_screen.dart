@@ -29,18 +29,21 @@ class _KBalanceSheetListScreenState extends State<KBalanceSheetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(actions: [
-        KStyles.stdButton(
-            onPressed: () {
-              final n = widget.storage.balanceSheets.length;
-              setState(() {
-                widget.storage.balanceSheets
-                    .add(KBalanceSheet.defaults("Balance Sheet $n"));
-              });
-              _editBalanceSheet(n);
-            },
-            icon: const Icon(Icons.add))
-      ]),
+      appBar: AppBar(
+          backgroundColor: KStyles.stdGreen,
+          title: const Text('Balance Sheets', style: KStyles.boldTextStyle),
+          actions: [
+            KStyles.stdButton(
+                onPressed: () {
+                  final n = widget.storage.balanceSheets.length;
+                  setState(() {
+                    widget.storage.balanceSheets
+                        .add(KBalanceSheet.defaults("Balance Sheet $n"));
+                  });
+                  _editBalanceSheet(n);
+                },
+                icon: const Icon(Icons.add))
+          ]),
       body: ReorderableListView(
           onReorder: (int oldIndex, int newIndex) {
             setState(() {

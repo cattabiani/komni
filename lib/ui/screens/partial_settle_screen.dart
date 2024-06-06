@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:komni/models/balance_sheet.dart';
-import 'package:komni/models/transaction.dart';
 import 'package:komni/utils/styles.dart';
 import 'package:komni/utils/utils.dart';
-import 'package:komni/ui/screens/edit_list_screen.dart';
 
 class KPartialSettleScreen extends StatefulWidget {
   final KBalanceSheet balanceSheet;

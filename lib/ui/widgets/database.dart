@@ -17,6 +17,7 @@ class KDatabase extends StatefulWidget {
     Hive.registerAdapter(KBalanceSheetAdapter());
     Hive.registerAdapter(KBalanceSheetResultsAdapter());
     Hive.registerAdapter(KTransactionAdapter());
+
     // await Hive.deleteBoxFromDisk('KOmniBox');
     await Hive.openBox<KStorage>('KOmniBox');
   }

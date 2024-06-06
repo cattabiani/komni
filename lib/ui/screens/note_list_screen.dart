@@ -31,20 +31,23 @@ class _KNoteListScreenState extends State<KNoteListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(actions: [
-        KStyles.stdButton(
-            onPressed: () async {
-              final n = widget.storage.notes.length;
-              final note = KNote.defaults("Note $n");
-              final bool edited = await _editNote(note);
-              if (edited) {
-                setState(() {
-                  widget.storage.notes.add(note);
-                });
-              }
-            },
-            icon: const Icon(Icons.add)),
-      ]),
+      appBar: AppBar(
+          backgroundColor: KStyles.stdGreen,
+          title: const Text('Notes', style: KStyles.boldTextStyle),
+          actions: [
+            KStyles.stdButton(
+                onPressed: () async {
+                  final n = widget.storage.notes.length;
+                  final note = KNote.defaults("Note $n");
+                  final bool edited = await _editNote(note);
+                  if (edited) {
+                    setState(() {
+                      widget.storage.notes.add(note);
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add)),
+          ]),
       body: ReorderableListView(
           onReorder: (int oldIndex, int newIndex) {
             setState(() {

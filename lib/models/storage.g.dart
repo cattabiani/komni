@@ -19,17 +19,23 @@ class KStorageAdapter extends TypeAdapter<KStorage> {
     return KStorage(
       (fields[0] as List).cast<KNote>(),
       (fields[1] as List).cast<KBalanceSheet>(),
+      fields[2] as int,
+      fields[3] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, KStorage obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.notes)
       ..writeByte(1)
-      ..write(obj.balanceSheets);
+      ..write(obj.balanceSheets)
+      ..writeByte(2)
+      ..write(obj.initScreen)
+      ..writeByte(3)
+      ..write(obj.downloadPath);
   }
 
   @override

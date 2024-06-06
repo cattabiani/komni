@@ -10,9 +10,15 @@ class KStorage {
   List<KNote> notes = [];
   @HiveField(1)
   List<KBalanceSheet> balanceSheets = [];
+  @HiveField(2)
+  int initScreen = 0;
+  @HiveField(3)
+  String downloadPath = "";
 
-  KStorage(this.notes, this.balanceSheets);
+  KStorage(this.notes, this.balanceSheets, this.initScreen, this.downloadPath);
   KStorage.defaults()
       : notes = [],
-        balanceSheets = [];
+        balanceSheets = [],
+        initScreen = 0,
+        downloadPath = "";
 }

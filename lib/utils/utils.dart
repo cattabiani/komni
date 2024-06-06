@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
 
 String cents2str(int cents, bool is0empty, {int truncate = -1}) {
   if (is0empty && cents == 0) {
@@ -58,4 +61,41 @@ mixin SaveStateMixin<T extends StatefulWidget> on State<T> {
 
 int invIdx(int idx, int l) {
   return l - idx - 1;
+}
+
+Future<String> getPath(String dir, String name, String ext) async {
+  final PermissionStatus status = await Permission.storage.request();
+
+  if (status != PermissionStatus.granted) {
+    throw "$status";
+  }
+
+  final Directory directory = Directory(dir);
+  if (!await directory.exists()) {
+    throw 'Directory "${directory.path}" does not exist';
+  }
+
+  String basePath = path.join(dir, name);
+  String fullPath = '$basePath.$ext';
+  int counter = 1;
+
+  while (await File(fullPath).exists()) {
+    fullPath = '$basePath($counter).$ext';
+    counter++;
+  }
+
+  return fullPath;
+}
+
+String sanitize(String s) {
+  return s
+      .replaceAll(r'\', '')
+      .replaceAll('/', '')
+      .replaceAll('*', '')
+      .replaceAll('?', '')
+      .replaceAll('"', '')
+      .replaceAll('<', '')
+      .replaceAll('>', '')
+      .replaceAll('|', '')
+      .replaceAll(' ', '_');
 }
